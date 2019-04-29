@@ -1,0 +1,777 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css">
+
+
+  <meta name="keywords" content="Architecture,">
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0">
+
+
+
+
+
+
+<meta name="description" content="系统的架构是比较复杂的，在苹果的开发文档中，展示了一种针对开发人员的分层方式： Layers of OS        Cocoa(Application)   Media   Core Services   Core OS   Kernel and Device Drivers     Cocoa（Application）Cocoa框架层或者应用程序层，用户UI，包括了用于开发界面程序的框架集合">
+<meta name="keywords" content="Architecture">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OS-Architecture">
+<meta property="og:url" content="http://xjbevasion.github.io/2018/08/28/OS-Architecture/index.html">
+<meta property="og:site_name" content="XJBevasion">
+<meta property="og:description" content="系统的架构是比较复杂的，在苹果的开发文档中，展示了一种针对开发人员的分层方式： Layers of OS        Cocoa(Application)   Media   Core Services   Core OS   Kernel and Device Drivers     Cocoa（Application）Cocoa框架层或者应用程序层，用户UI，包括了用于开发界面程序的框架集合">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2019-04-29T06:30:53.017Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="OS-Architecture">
+<meta name="twitter:description" content="系统的架构是比较复杂的，在苹果的开发文档中，展示了一种针对开发人员的分层方式： Layers of OS        Cocoa(Application)   Media   Core Services   Core OS   Kernel and Device Drivers     Cocoa（Application）Cocoa框架层或者应用程序层，用户UI，包括了用于开发界面程序的框架集合">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://xjbevasion.github.io/2018/08/28/OS-Architecture/">
+
+
+
+
+
+  <title> OS-Architecture | XJBevasion </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">XJBevasion</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">如有指教，请发邮件，必细心听取。</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br>
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://xjbevasion.github.io/2018/08/28/OS-Architecture/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="xjbevasion">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="XJBevasion">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                OS-Architecture
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-08-28T01:21:32+08:00">
+                2018-08-28
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/MacOS-Internals/" itemprop="url" rel="index">
+                    <span itemprop="name">MacOS Internals</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>系统的架构是比较复杂的，在苹果的开发文档中，展示了一种<a href="https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/OSX_Technology_Overview/About/About.html" target="_blank" rel="noopener">针对开发人员的分层方式</a>：</p>
+<h1 id="Layers-of-OS"><a href="#Layers-of-OS" class="headerlink" title="Layers of OS"></a>Layers of OS</h1><table>
+<thead>
+<tr>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cocoa(Application)</td>
+</tr>
+<tr>
+<td>Media</td>
+</tr>
+<tr>
+<td>Core Services</td>
+</tr>
+<tr>
+<td>Core OS</td>
+</tr>
+<tr>
+<td>Kernel and Device Drivers</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Cocoa（Application）<br>Cocoa框架层或者应用程序层，用户UI，包括了用于开发界面程序的框架集合</li>
+<li>Media<br>媒体层，包含了图像、声音等开发需要的框架，苹果列出了有AVFoundation,CoreAudio, CoreImage 和 CoreAnimation.包括一些下层的支持-OpenAL,OpenGL,Quartz.</li>
+<li>Core Services<br>核心服务层，提供了系统安全、底层、内部数据访问及存储的支持接口，不直接影响UI。包括了 Foundation framework(NS<em> APIs) 和 CoreFoundation(CF</em> APIs),还有一些其他的框架。</li>
+<li>Core OS<br>核心系统层。提供了系统基础的OS APIs,包含加速器、异常处理、网络接口、系统配置等框架</li>
+<li>Kernel and Device Drivers<br>内核与驱动层。包括XNU和所有类型的内核扩展，提供了开发设备驱动和内核扩展所需的一些框架。</li>
+</ul>
+<p>其中Core OS 与Kernel and Devices Drivers 一起也被称为Darwin层。Darwin 是OSX的核心操作系统，是直接管理硬件的部分，包括系统内核与shell环境（System utilities）。</p>
+<h1 id="Darwin"><a href="#Darwin" class="headerlink" title="Darwin"></a>Darwin</h1><p>Darwin的XNU内核中包扩了一个BSD层和Mach层</p>
+<h2 id="Mach（I-Okit-Driver）"><a href="#Mach（I-Okit-Driver）" class="headerlink" title="Mach（I/Okit, Driver）"></a>Mach（I/Okit, Driver）</h2><p>以mach为独立的微内核，处于底层，为上层提供最简单的原义，同时为了保持微内核的优势，及稳定性，提供的特性比较简单、基础。</p>
+<ul>
+<li>内存保护。一个进程如果意外的将数据写入系统的其它进程，会导致数据丢失或系统崩溃。Mach避免这种情况的发生，Mach让系统的一部分不会破坏其它的部分。</li>
+<li>抢占式多任务。Mach监视CPU，调度任务（task）的运行，保证系统的高效率和资源利用。由系统决定一个任务的执行时间，而不是另一进程 </li>
+<li>虚拟内存。每个进程有自己的唯一的地址空间。32位应用程序有4GB的地址空间，64位应用程序有18EB的地址空间。Mach处理从任务中虚内存到物理内存的映射。在任意时刻，只有一部分虚内存实际驻留在物理内存中。物理内存在需要时被换入（page in）。Mach使用内存对象（memory objects）的概念让一个任务映射一部分内存，逆映射，并送入另一任务 </li>
+<li>实时支持。对时间敏感的应用程序保证低延迟。</li>
+</ul>
+<p>Mach也支持合作多任务（cooperative multitasking），强占式线程（preemptive threading）和合作线程（cooperative threading）。</p>
+<h2 id="BSD-Berkeley-Software-Distribution-filesystem-NKE"><a href="#BSD-Berkeley-Software-Distribution-filesystem-NKE" class="headerlink" title="BSD(Berkeley Software Distribution) (filesystem, NKE)"></a>BSD(Berkeley Software Distribution) (filesystem, NKE)</h2><p>为了通过unix验证，及提供丰富的系统编程接口，在mach层之上，分别提供了两个子系统， BSD, POSIX（通用系统）系统.主要包括fileSystem 和 Network Environment。</p>
+<ul>
+<li>进程模型（进程ID，信号）</li>
+<li>基础的安全策略（文件权限设定和用户、组ID设定）</li>
+<li>线程支持（POSIX线程）</li>
+<li>网络支持（BSD套接字）</li>
+</ul>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Architecture/" rel="tag"># Architecture</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/1970/07/01/hello-world/" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image" src="/images/avatar.gif" alt="xjbevasion">
+          <p class="site-author-name" itemprop="name">xjbevasion</p>
+           
+              <p class="site-description motion-element" itemprop="description">如有指教，请发邮件，必细心听取。</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/">
+                <span class="site-state-item-count">2</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-categories">
+              <a href="/categories/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            
+            
+            <div class="site-state-item site-state-tags">
+              <a href="/tags/index.html">
+                <span class="site-state-item-count">1</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/xjbevasion" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="xjbevasion@gmail.com" target="_blank" title="mail">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  mail
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Layers-of-OS"><span class="nav-number">1.</span> <span class="nav-text">Layers of OS</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Darwin"><span class="nav-number">2.</span> <span class="nav-text">Darwin</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Mach（I-Okit-Driver）"><span class="nav-number">2.1.</span> <span class="nav-text">Mach（I/Okit, Driver）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#BSD-Berkeley-Software-Distribution-filesystem-NKE"><span class="nav-number">2.2.</span> <span class="nav-text">BSD(Berkeley Software Distribution) (filesystem, NKE)</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xjbevasion</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
